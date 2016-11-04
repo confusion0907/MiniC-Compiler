@@ -1,0 +1,14 @@
+.DATA
+	number: .BYTE ?
+	a: .BYTE ?
+	b: .BYTE ?
+.CODE
+main :
+	= t0,-,1
+	= a,-,t0
+	= t1,-,2
+	= b,-,t1
+	= t2,-,a
+	= t3,-,b
+	+ t4,t2,t3
+	= c,-,t4
