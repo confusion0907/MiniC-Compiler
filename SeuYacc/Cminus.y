@@ -70,7 +70,6 @@ expr_stmt      : IDENT = expr ;                                         {p=looku
                | IDENT [ expr ] = expr ;                                {}
                | $ expr = expr ;                                        {}
                | IDENT ( args ) ;                                       {}
-               | IDENT ( ) ;                                            {}
 
 while_stmt     : WHILE_IDENT ( expr ) stmt                              {while_stmt.begin=newlabel();expr.true=newlabel();expr.false=while.stmt.next;stmt.next=while_stmt.begin;while_stmt.code=gen(while_stmt.begin ':') || expr.code || gen(expr.true ':') || stmt.code || gen('j' while_stmt.begin);}
 

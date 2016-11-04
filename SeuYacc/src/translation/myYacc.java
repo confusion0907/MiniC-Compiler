@@ -8,7 +8,7 @@ import java.util.Stack;
 import java.util.Vector;
 
 public class myYacc {
-	final int number = 1586;
+	final int number = 1577;
 	public String terminals[] = {"#","IDENT","VOID","INT","WHILE","IF","ELSE","RETURN","EQ","NE","LE","GE","AND","OR","DECNUM","CONTINUE","BREAK","HEXNUM","LSHIFT","RSHIFT",";","[","]","(",")",",","{","}","=","$","<",">","+","-","*","/","%","!","&","^","~","|"};
 	public String nonterminals[] = {"program","decl_list","decl","var_decl","type_spec","fun_decl","FUNCTION_IDENT","params","param_list","param","compound_stmt","compound","local_decls","local_decl","stmt_list","stmt","expr_stmt","while_stmt","WHILE_IDENT","block_stmt","if_stmt","return_stmt","expr","int_literal","arg_list","args","continue_stmt","break_stmt"};
 	public String [][]actions;
@@ -186,7 +186,7 @@ public class myYacc {
 		return -1;
 	}
 	
-	public boolean YaccAnalysis(String []ss)
+	public boolean YaccAnalysis(String []ss,Vector<Integer> regulation)
 	{
 		for(int i = 0 ; i < ss.length-1 ; i++)
 		{
@@ -219,10 +219,11 @@ public class myYacc {
 				{
 					states.push(Integer.parseInt(temp.substring(1)));
 					signals.push(ss[index++]);
+					regulation.addElement(-1);
 				}
 				else if(temp.charAt(0) == 'r' && (findNonterminal(Integer.parseInt(temp.substring(1)))!=-1 || temp.equals("r0")))
 				{
-					//ÓïÒå·ÖÎö
+					regulation.add(Integer.parseInt(temp.substring(1)));
 					System.out.println(temp);
 					if(temp.equals("r0"))
 						return true;
