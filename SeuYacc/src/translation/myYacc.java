@@ -187,21 +187,7 @@ public class myYacc {
 	}
 	
 	public boolean YaccAnalysis(String []ss,Vector<Integer> regulation)
-	{
-		for(int i = 0 ; i < ss.length-1 ; i++)
-		{
-			if((ss[i] == "{" && ss[i+1] == "}") || (ss[i] == "(" && ss[i+1] == ")"))
-			{
-				String []s = new String[ss.length+1];
-				for(int j = 0 ; j <= i ; j++)
-					s[j] = ss[j];
-				s[i+1] = "#";
-				for(int j = i+1 ; j < ss.length ; j++)
-					s[j+1] = ss[j];
-				ss = s;
-			}
-		}
-		
+	{	
 		Stack<Integer> states = new Stack<Integer>();
 		Stack<String> signals = new Stack<String>();
 		

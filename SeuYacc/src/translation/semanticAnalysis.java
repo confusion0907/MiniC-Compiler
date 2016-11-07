@@ -85,6 +85,7 @@ public class semanticAnalysis
 			nonter.pop();
 			nonter.pop();
 			nonter.pop();
+			nonter.push(new fun_decl());
 			break;
 		case 12:
 			FUNCTION_IDENT id = new FUNCTION_IDENT((IDENT)nonter.pop());
@@ -347,6 +348,8 @@ public class semanticAnalysis
 			nonter.push(ar);
 			break;
 		case 81:
+			args ar2 = new args();
+			nonter.push(ar2);
 			break;
 		case 82:
 			continue_stmt constmt = new continue_stmt();

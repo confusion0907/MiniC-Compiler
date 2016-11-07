@@ -12,19 +12,6 @@ public class translation {
 		
 		String []lexTranslation = ml.LexAnalysis(code);
 		
-		for(int i = 0 ; i < code.length-1 ; i++)
-		{
-			if((code[i] == "{" && code[i+1] == "}") || (code[i] == "(" && code[i+1] == ")"))
-			{
-				String []temp = new String[code.length+1];
-				for(int j = 0 ; j <= i ; j++)
-					temp[j] = code[j];
-				temp[i+1] = "#";
-				for(int j = i+1 ; j < code.length ; j++)
-					temp[j+1] = code[j];
-				code = temp;
-			}
-		}
 		String []temp = new String[code.length+1];
 		for(int i = 0 ; i < code.length ; i++)
 			temp[i] = code[i];
@@ -39,6 +26,29 @@ public class translation {
 		lexTranslation = temp;
 		
 		Vector<Integer> regulation = new Vector<Integer>();
+		
+		for(int i = 0 ; i < lexTranslation.length-1 ; i++)
+		{
+			if((lexTranslation[i] == "{" && lexTranslation[i+1] == "}") || (lexTranslation[i] == "(" && lexTranslation[i+1] == ")"))
+			{
+				String []s = new String[lexTranslation.length+1];
+				String []ss = new String[code.length+1];
+				for(int j = 0 ; j <= i ; j++)
+				{
+					s[j] = lexTranslation[j];
+					ss[j] = code[j];
+				}
+				s[i+1] = "#";
+				ss[i+1] = "#";
+				for(int j = i+1 ; j < lexTranslation.length ; j++)
+				{
+					s[j+1] = lexTranslation[j];
+					ss[j+1] = code[j];
+				}
+				lexTranslation = s;
+				code = ss;
+			}
+		}
 		
 		my.YaccAnalysis(lexTranslation,regulation);
 		
@@ -55,13 +65,8 @@ public class translation {
 			{
 				if(temp.get(i).equals(".DATA") || temp.get(i).equals(".CODE"))
 					fileWriter.write(temp.get(i));
-				else if(temp.get(i).contains(":") && !temp.get(i).contains("?"))
-					fileWriter.write(temp.get(i));
 				else
-				{
-					fileWriter.write("\t");
 					fileWriter.write(temp.get(i));
-				}
 				fileWriter.write("\r\n");
 			}
 			fileWriter.close();

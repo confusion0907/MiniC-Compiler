@@ -1,10 +1,6 @@
 package translation;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 public class attributeDefinition 
 {
@@ -12,7 +8,8 @@ public class attributeDefinition
 	static Vector<String> data = new Vector<String>();
 	static int temp = 0;
 	static int seg = 0;
-	static Map<String,String> address = new HashMap<String,String>();
+	static String next = "";
+	static boolean judge = false;
 	
 	public attributeDefinition()
 	{
@@ -183,17 +180,30 @@ class expr extends attributeDefinition
 		this.False = False;
 	}
 	
+	public void changeTrue(String true1)
+	{
+		for(int i = 0 ; i < this.code.size() ; i++)
+			this.code.set(i, this.code.get(i).replaceAll(True, true1));
+		
+		True = true1;
+	}
+	
+	public void changeFalse(String false1)
+	{
+		for(int i = 0 ; i < this.code.size() ; i++)
+			this.code.set(i, this.code.get(i).replaceAll(False, false1));
+		
+		False = false1;
+	}
+	
 	public String getTrue() {
 		return True;
 	}
 
 	public void setTrue(String true1) {
 		for(int i = 0 ; i < this.code.size() ; i++)
-		{
-			String []ss = this.True.split(",");
-			if(ss[2].equals(this.True))
-				this.code.set(i, ss[0]+","+ss[1]+","+true1);
-		}
+			this.code.set(i, this.code.get(i).replaceAll("offsetTrue", true1));
+		
 		True = true1;
 	}
 
@@ -203,28 +213,141 @@ class expr extends attributeDefinition
 
 	public void setFalse(String false1) {
 		for(int i = 0 ; i < this.code.size() ; i++)
-		{
-			String []ss = this.False.split(",");
-			if(ss[2].equals(this.False))
-				this.code.set(i, ss[0]+","+ss[1]+","+false1);
-		}
+			this.code.set(i, this.code.get(i).replaceAll("offsetFalse", false1));
+		
 		False = false1;
+	}
+	
+	public void setPlace(String place)
+	{
+		this.place = place;
+		String []ss = this.code.firstElement().split(":");
+		ss[0] = place;
+		this.code.set(0, ss[0]+":"+ss[1]);
 	}
 
 	public expr(expr ex2,expr ex1,String op)
 	{
 		super();
-		for(int i = 0 ; i < ex1.code.size()-1 ; i++)
-			this.code.add(new String(ex1.code.get(i)));
-		for(int i = 0 ; i < ex2.code.size()-1 ; i++)
-			this.code.add(new String(ex2.code.get(i)));
-		if(op.equals("OR") || op.equals("AND"))
+		if(op.equals("OR"))
 		{
-			
+			this.place = ex1.place;
+			ex1.setFalse(ex2.place);
+			for(int i = 0 ; i < ex1.code.size() ; i++)
+				this.code.add(ex1.code.get(i));
+			for(int i = 0 ; i < ex2.code.size() ; i++)
+				this.code.add(ex2.code.get(i));
+		}
+		else if(op.equals("AND"))
+		{
+			this.place = ex1.place;
+			ex1.setTrue(ex2.place);
+			for(int i = 0 ; i < ex1.code.size() ; i++)
+				this.code.add(ex1.code.get(i));
+			for(int i = 0 ; i < ex2.code.size() ; i++)
+				this.code.add(ex2.code.get(i));
+		}
+		else if(op.equals("EQ"))
+		{
+			String now = "s"+Integer.toString(seg++);
+			this.place = now;
+			if(ex1.code.size() > 1)
+			{
+				this.code.add(now+":"+ex1.code.get(0));
+				for(int i = 1 ; i < ex1.code.size()-1 ; i++)
+					this.code.add(ex1.code.get(i));
+			}
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(ex2.code.get(i));
+			this.code.add("\tBEQ "+ex1.code.lastElement()+","+ex2.code.lastElement()+","+"offsetTrue");
+			this.code.add("\tJ offsetFalse,-,-");
+		}
+		else if(op.equals("NE"))
+		{
+			String now = "s"+Integer.toString(seg++);
+			this.place = now;
+			if(ex1.code.size() > 1)
+			{
+				this.code.add(now+":"+ex1.code.get(0));
+				for(int i = 1 ; i < ex1.code.size()-1 ; i++)
+					this.code.add(ex1.code.get(i));
+			}
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(ex2.code.get(i));
+			this.code.add("\tBNE "+ex1.code.lastElement()+","+ex2.code.lastElement()+","+"offsetTrue");
+			this.code.add("\tJ offsetFalse,-,-");
+		}
+		else if(op.equals("LE"))
+		{
+			String now = "s"+Integer.toString(seg++);
+			this.place = now;
+			if(ex1.code.size() > 1)
+			{
+				this.code.add(now+":"+ex1.code.get(0));
+				for(int i = 1 ; i < ex1.code.size()-1 ; i++)
+					this.code.add(ex1.code.get(i));
+			}
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(ex2.code.get(i));
+			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBLEZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\tJ offsetFalse,-,-");
+		}
+		else if(op.equals("GE"))
+		{
+			String now = "s"+Integer.toString(seg++);
+			this.place = now;
+			if(ex1.code.size() > 1)
+			{
+				this.code.add(now+":"+ex1.code.get(0));
+				for(int i = 1 ; i < ex1.code.size()-1 ; i++)
+					this.code.add(ex1.code.get(i));
+			}
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(ex2.code.get(i));
+			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBGEZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\tJ offsetFalse,-,-");
+		}
+		else if(op.equals("<"))
+		{
+			String now = "s"+Integer.toString(seg++);
+			this.place = now;
+			if(ex1.code.size() > 1)
+			{
+				this.code.add(now+":"+ex1.code.get(0));
+				for(int i = 1 ; i < ex1.code.size()-1 ; i++)
+					this.code.add(ex1.code.get(i));
+			}
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(ex2.code.get(i));
+			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBLTZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\tJ offsetFalse,-,-");
+		}
+		else if(op.equals(">"))
+		{
+			String now = "s"+Integer.toString(seg++);
+			this.place = now;
+			if(ex1.code.size() > 1)
+			{
+				this.code.add(now+":"+ex1.code.get(0));
+				for(int i = 1 ; i < ex1.code.size()-1 ; i++)
+					this.code.add(ex1.code.get(i));
+			}
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(ex2.code.get(i));
+			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBGTZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\tJ offsetFalse,-,-");
 		}
 		else
 		{
-			this.code.add(op+" t"+temp+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			for(int i = 0 ; i < ex1.code.size()-1 ; i++)
+				this.code.add(new String(ex1.code.get(i)));
+			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
+				this.code.add(new String(ex2.code.get(i)));
+			this.code.add("\t"+op+" t"+temp+","+ex1.code.lastElement()+","+ex2.code.lastElement());
 			this.code.add("t"+(temp++));
 		}
 	}
@@ -236,19 +359,22 @@ class expr extends attributeDefinition
 		{
 			for(int i = 0 ; i < ex.code.size()-1 ; i++)
 				this.code.add(new String(ex.code.get(i)));
-			this.code.add(op+" t"+temp+",0,"+ex.code.lastElement());
+			this.code.add("\t"+op+" t"+temp+",0,"+ex.code.lastElement());
 			this.code.add("t"+(temp++));
 		}
 		else if(op.equals("$") || op.equals("~"))
 		{
 			for(int i = 0 ; i < ex.code.size()-1 ; i++)
 				this.code.add(new String(ex.code.get(i)));
-			this.code.add(op+" t"+temp+",-,"+ex.code.lastElement());
+			this.code.add("\t"+op+" t"+temp+",-,"+ex.code.lastElement());
 			this.code.add("t"+(temp++));
 		}
 		else if(op.equals("!"))
 		{
-			
+			String trueTemp = ex.False;
+			String falseTemp = ex.True;
+			ex.changeTrue(trueTemp);
+			ex.changeFalse(falseTemp);
 		}
 	}
 	
@@ -265,14 +391,14 @@ class expr extends attributeDefinition
 	public expr(int_literal inl)
 	{
 		super();
-		this.code.add("= t"+temp+",-,"+inl.lexval);
+		this.code.add("\t= t"+temp+",-,"+inl.lexval);
 		this.code.add("t"+(temp++));
 	}
 	
 	public expr(IDENT id)
 	{
 		super();
-		this.code.add("= t"+temp+",-,"+id.name);
+		this.code.add("\t= t"+temp+",-,"+id.name);
 		this.code.add("t"+(temp++));
 	}
 	
@@ -281,7 +407,7 @@ class expr extends attributeDefinition
 		super();
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(ex.code.get(i));
-		this.code.add("=[] t"+temp+","+ex.code.lastElement()+","+id.name);
+		this.code.add("\t=[] t"+temp+","+ex.code.lastElement()+","+id.name);
 		this.code.add("t"+(temp++));
 	}
 	
@@ -290,11 +416,11 @@ class expr extends attributeDefinition
 		super();
 		for(int i = 0 ; i < arg.code.size() ; i++)
 			this.code.add(arg.code.get(i));
-		this.code.add("CALL -,-,"+id.name);
-		this.code.add("POP -,-,t"+temp++);
+		this.code.add("\tCALL -,-,"+id.name);
+		this.code.add("\tPOP -,-,t"+temp++);
 		for(int i = 0 ; i < arg.code.size() ; i++)
-			this.code.add("POP -,-,t"+temp);
-		this.code.add("= t"+temp+",-,t"+(temp-1));
+			this.code.add("\tPOP -,-,t"+temp);
+		this.code.add("\t= t"+temp+",-,t"+(temp-1));
 		this.code.add("t"+(temp++));
 	}
 }
@@ -306,7 +432,7 @@ class expr_stmt extends attributeDefinition
 		super();
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(ex.code.get(i));
-		this.code.add("= "+id.name+",-,"+ex.code.lastElement());
+		this.code.add("\t= "+id.name+",-,"+ex.code.lastElement());
 	}
 	
 	public expr_stmt(expr ex2,expr ex1,IDENT id)
@@ -316,7 +442,7 @@ class expr_stmt extends attributeDefinition
 			this.code.add(ex1.code.get(i));
 		for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 			this.code.add(ex2.code.get(i));
-		this.code.add("=[] "+id.name+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+		this.code.add("\t=[] "+id.name+","+ex1.code.lastElement()+","+ex2.code.lastElement());
 	}
 	
 	public expr_stmt(expr ex2,expr ex1)
@@ -326,7 +452,7 @@ class expr_stmt extends attributeDefinition
 			this.code.add(ex1.code.get(i));
 		for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 			this.code.add(ex2.code.get(i));
-		this.code.add("$= -,"+ex1.code.lastElement()+","+ex2.code.lastElement());
+		this.code.add("\t$= -,"+ex1.code.lastElement()+","+ex2.code.lastElement());
 	}
 	
 	public expr_stmt(args arg,IDENT id)
@@ -334,12 +460,13 @@ class expr_stmt extends attributeDefinition
 		super();
 		for(int i = 0 ; i < arg.code.size() ; i++)
 			this.code.add(arg.code.get(i));
-		this.code.add("CALL -,-,"+id.name);
-		this.code.add("POP -,-,t"+temp++);
+		this.code.add("\tCALL -,-,"+id.name);
 		for(int i = 0 ; i < arg.code.size() ; i++)
-			this.code.add("POP -,-,t"+temp);
-		this.code.add("= t"+temp+",-,t"+(temp-1));
-		this.code.add("t"+(temp++));
+		{
+			if(i == 0)
+				temp = temp + 1;
+			this.code.add("\tPOP -,-,t"+temp);
+		}
 	}
 }
 
@@ -350,41 +477,110 @@ class if_stmt extends attributeDefinition
 	public if_stmt(stmt ifstmt,expr temp)
 	{
 		super();
-		String now = "s"+Integer.toString(seg++);
 		String next = "s"+Integer.toString(seg++);
+		String begin = "s"+Integer.toString(seg++);
 		this.next = next;
-		temp.True = now;
-		temp.False = next;
+		
+		if(judge == true)
+		{
+			temp.setPlace(next);
+			judge = false;
+		}
+		else
+			temp.code.set(0, temp.code.get(0).replaceAll(temp.place+":", ""));
+		
+		if(ifstmt.code.size() > 0)
+		{
+			String []ss = ifstmt.code.firstElement().split(":");
+			if(ss.length == 2)
+			{
+				temp.code.set(0, ss[0]+":"+temp.code.get(0));
+				ifstmt.code.set(0, ss[1]);
+			}
+		}
+		
+		temp.setTrue(begin);
+		temp.setFalse(next);;
 		ifstmt.next = next;
-		for(int i = 0 ; i < temp.code.size() ; i++)
-			this.code.add(new String(temp.code.get(i)));
-		this.code.add(temp.True+": "+ifstmt.code.get(0));
-		this.code.add("J "+this.next+",-,-");
+		if(ifstmt.code.size() > 0)
+		{
+			for(int i = 0 ; i < temp.code.size() ; i++)
+				this.code.add(new String(temp.code.get(i)));
+			this.code.add(begin+":"+ifstmt.code.get(0));
+		}
+		else 
+		{
+			temp.changeTrue(next);
+			for(int i = 0 ; i < temp.code.size() ; i++)
+				this.code.add(new String(temp.code.get(i)));
+		}
 		for(int i = 1 ; i < ifstmt.code.size() ; i++)
 			this.code.add(new String(ifstmt.code.get(i)));
-		this.code.add(temp.False+": ");
+		
+		judge = true;
+		attributeDefinition.next = this.next;
 	}
+	
 	public if_stmt(stmt ifstmt2,stmt ifstmt1,expr temp)
 	{
 		super();
-		String now = "s"+Integer.toString(seg++);
-		String next1 = "s"+Integer.toString(seg++);
-		String next2 = "s"+Integer.toString(seg++);
-		this.next = next2;
-		temp.True = now;
-		temp.False = next1;
-		ifstmt1.next = next1;
+		String begin = "s"+Integer.toString(seg++);
+		String begin2 = "s"+Integer.toString(seg++);
+		String next = "s"+Integer.toString(seg++);
+		this.next = next;
 		
-		for(int i = 1 ; i < temp.code.size() ; i++)
-			this.code.add(new String(temp.code.get(i)));
-		this.code.add(temp.True+": "+ifstmt1.code.get(0));
-		for(int i = 1 ; i < ifstmt1.code.size() ; i++)
-			this.code.add(new String(ifstmt1.code.get(i)));
-		this.code.add("J "+this.next+",-,-");
-		this.code.add(temp.False+": "+ifstmt2.code.get(0));
-		for(int i = 1 ; i < ifstmt2.code.size() ; i++)
-			this.code.add(new String(ifstmt2.code.get(i)));
-		this.code.add(this.next+": ");
+		temp.code.set(0, temp.code.get(0).replaceAll(temp.place+":", ""));
+		
+		if(judge == true)
+		{
+			temp.setPlace(next);
+			judge = false;
+		}
+		
+		if(ifstmt1.code.size() > 0)
+		{
+			String []ss = ifstmt1.code.firstElement().split(":");
+			if(ss.length == 2)
+			{
+				temp.code.set(0, ss[0]+":"+temp.code.get(0));
+				ifstmt1.code.set(0, ss[1]);
+			}
+		}
+		
+		temp.setTrue(begin);
+		temp.setFalse(begin2);
+		ifstmt1.next = next;
+		ifstmt2.next = next;
+		
+		if(ifstmt2.code.size() <= 0)
+			temp.changeFalse(next);
+		if(ifstmt1.code.size() > 0)
+		{
+			for(int i = 0 ; i < temp.code.size() ; i++)
+				this.code.add(new String(temp.code.get(i)));
+			this.code.add(begin+":"+ifstmt1.code.get(0));
+			for(int i = 1 ; i < ifstmt1.code.size() ; i++)
+				this.code.add(new String(ifstmt1.code.get(i)));
+			this.code.add("\tJ "+this.next+",-,-");
+		}
+		else 
+		{
+			temp.changeTrue(next);
+			for(int i = 0 ; i < temp.code.size() ; i++)
+				this.code.add(new String(temp.code.get(i)));
+		}
+		
+		if(ifstmt2.code.size() > 0)
+		{
+			this.code.add(begin2+": "+ifstmt2.code.get(0));
+			for(int i = 1 ; i < ifstmt2.code.size() ; i++)
+				this.code.add(new String(ifstmt2.code.get(i)));
+			this.code.add("\tJ "+this.next+",-,-");
+		}
+		
+		judge = true;
+		attributeDefinition.next = this.next;
+		
 	}
 }
 
@@ -396,44 +592,55 @@ class while_stmt extends attributeDefinition
 	public while_stmt(stmt whilestmt,expr temp)
 	{
 		super();
-		String judge = "s"+Integer.toString(seg);
-		Iterator<Entry<String, String>> it = address.entrySet().iterator();
-		while(it.hasNext())
-		{
-			Entry<String, String> entry = it.next();
-			if(entry.getKey().equals("CONTINUE"))
-			{
-				judge = entry.getValue();
-				address.remove("CONTINUE");
-				seg++;
-				break;
-			}
-		}
-		String begin = "s"+Integer.toString(seg++);
 		String next = "s"+Integer.toString(seg++);
-		Iterator<Entry<String, String>> it2 = address.entrySet().iterator();
-		while(it2.hasNext())
+		String begin = "s"+Integer.toString(seg++);
+		this.next = next;
+		
+		if(judge == true)
 		{
-			Entry<String, String> entry = it2.next();
-			if(entry.getKey().equals("BREAK"))
+			judge = false;
+			
+			for(int i = 0 ; i < whilestmt.code.size() ; i++)
+				whilestmt.code.set(i, whilestmt.code.get(i).replaceAll(whilestmt.next, temp.place));
+		}
+		
+		if(whilestmt.code.size() > 0)
+		{
+			String []ss = whilestmt.code.firstElement().split(":");
+			if(ss.length == 2)
 			{
-				judge = entry.getValue();
-				address.remove("BREAK");
-				seg++;
-				break;
+				temp.setPlace(ss[0]);
+				whilestmt.code.set(0, ss[1]);
 			}
 		}
-		this.begin = judge;
-		this.next = next;
-		temp.setTrue(begin);
-		temp.setFalse(next);
-		for(int i = 1 ; i < temp.code.size() ; i++)
-			this.code.add(new String(temp.code.get(i)));
-		this.code.add(temp.True+": "+whilestmt.code.get(0));
+		
 		for(int i = 0 ; i < whilestmt.code.size() ; i++)
-			this.code.add(new String(whilestmt.code.get(i)));
-		this.code.add("J "+this.begin+",-,-");
-		this.code.add(temp.False+": ");
+		{
+			whilestmt.code.set(i, whilestmt.code.get(i).replaceAll("offsetBreak", next));
+			whilestmt.code.set(i, whilestmt.code.get(i).replaceAll("offsetContinue", temp.place));
+		}
+		
+		temp.setTrue(begin);
+		temp.setFalse(next);;
+		whilestmt.next = next;
+		if(whilestmt.code.size() > 0)
+		{
+			for(int i = 0 ; i < temp.code.size() ; i++)
+				this.code.add(new String(temp.code.get(i)));
+			this.code.add(begin+": "+whilestmt.code.get(0));
+			for(int i = 1 ; i < whilestmt.code.size() ; i++)
+				this.code.add(new String(whilestmt.code.get(i)));
+			this.code.add("\tJ "+temp.place+",-,-");
+		}
+		else 
+		{
+			temp.changeTrue(temp.place);
+			for(int i = 0 ; i < temp.code.size() ; i++)
+				this.code.add(new String(temp.code.get(i)));
+		}
+		
+		judge = true;
+		attributeDefinition.next = this.next;
 	}
 }
 
@@ -444,24 +651,7 @@ class break_stmt extends attributeDefinition
 	public break_stmt()
 	{
 		super();
-		boolean judge = false;
-		String next = "s"+Integer.toString(seg);
-		Iterator<Entry<String, String>> it = address.entrySet().iterator();
-		while(it.hasNext())
-		{
-			Entry<String, String> entry = it.next();
-			if(entry.getKey().equals("BREAK"))
-			{
-				judge = true;
-				next = entry.getValue();
-				seg++;
-				break;
-			}
-		}
-		if(judge == false)
-			address.put("BREAK", next);
-		this.next = next;
-		this.code.add("J "+next+",-,-");
+		this.code.add("\tJ offsetBreak,-,-");
 	}
 }
 
@@ -472,24 +662,7 @@ class continue_stmt extends attributeDefinition
 	public continue_stmt()
 	{
 		super();
-		boolean judge = false;
-		String next = "s"+Integer.toString(seg);
-		Iterator<Entry<String, String>> it = address.entrySet().iterator();
-		while(it.hasNext())
-		{
-			Entry<String, String> entry = it.next();
-			if(entry.getKey().equals("CONTINUE"))
-			{
-				judge = true;
-				next = entry.getValue();
-				seg++;
-				break;
-			}
-		}
-		if(judge == false)
-			address.put("CONTINUE", next);
-		this.next = next;
-		this.code.add("J "+next+",-,-");
+		this.code.add("\tJ offsetContinue,-,-");
 	}
 }
 
@@ -514,7 +687,7 @@ class arg_list extends attributeDefinition
 		super();
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
-		this.code.add("PUSH " + ex.code.lastElement() + ",-,-");
+		this.code.add("\tPUSH " + ex.code.lastElement() + ",-,-");
 	}
 	
 	public arg_list(expr ex,arg_list list)
@@ -524,7 +697,7 @@ class arg_list extends attributeDefinition
 			this.code.add(new String(list.code.get(i)));
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
-		this.code.add("PUSH " + ex.code.lastElement() + ",-,-");
+		this.code.add("\tPUSH " + ex.code.lastElement() + ",-,-");
 	}
 }
 
@@ -535,7 +708,7 @@ class return_stmt extends attributeDefinition
 	public return_stmt()
 	{
 		super();
-		this.code.add("Jal -,-,-");
+		this.code.add("\tJal -,-,-");
 	}
 	
 	public return_stmt(expr ex)
@@ -543,8 +716,8 @@ class return_stmt extends attributeDefinition
 		super();
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
-		this.code.add("PUSH"+ex.code.lastElement()+",-,-");
-		this.code.add("Jal -,-,-");
+		this.code.add("\tPUSH"+ex.code.lastElement()+",-,-");
+		this.code.add("\tJal -,-,-");
 	}
 }
 
@@ -555,13 +728,30 @@ class stmt extends attributeDefinition
 	public stmt(expr_stmt estmt)
 	{
 		super();
-		for(int i = 0 ; i < estmt.code.size() ; i++)
-			this.code.add(new String(estmt.code.get(i)));
+		if(judge == true)
+		{
+			if(estmt.code.firstElement().split(":").length == 1)
+			{
+				this.code.add(attributeDefinition.next+":"+estmt.code.firstElement());
+				judge = false;
+			}
+			else
+				this.code.add(estmt.code.firstElement().replaceAll(estmt.code.firstElement().split(":")[0], attributeDefinition.next));
+			
+			for(int i = 1 ; i < estmt.code.size() ; i++)
+				this.code.add(new String(estmt.code.get(i)));
+		}
+		else
+		{
+			for(int i = 0 ; i < estmt.code.size() ; i++)
+				this.code.add(new String(estmt.code.get(i)));
+		}
 	}
 	
 	public stmt(if_stmt istmt)
 	{
 		super();
+		this.next = istmt.next;
 		for(int i = 0 ; i < istmt.code.size() ; i++)
 			this.code.add(new String(istmt.code.get(i)));
 	}
@@ -569,6 +759,7 @@ class stmt extends attributeDefinition
 	public stmt(while_stmt wstmt)
 	{
 		super();
+		this.next = wstmt.next;
 		for(int i = 0 ; i < wstmt.code.size() ; i++)
 			this.code.add(new String(wstmt.code.get(i)));
 	}
@@ -576,27 +767,58 @@ class stmt extends attributeDefinition
 	public stmt(return_stmt rstmt)
 	{
 		super();
-		for(int i = 0 ; i < rstmt.code.size() ; i++)
-			this.code.add(new String(rstmt.code.get(i)));
+		if(judge == true)
+		{
+			this.code.add(attributeDefinition.next+":"+rstmt.code.firstElement());
+			judge = false;
+			for(int i = 1 ; i < rstmt.code.size() ; i++)
+				this.code.add(new String(rstmt.code.get(i)));
+		}
+		else
+		{
+			for(int i = 0 ; i < rstmt.code.size() ; i++)
+				this.code.add(new String(rstmt.code.get(i)));
+		}
 	}
 	
 	public stmt(continue_stmt cstmt)
 	{
 		super();
-		for(int i = 0 ; i < cstmt.code.size() ; i++)
-			this.code.add(new String(cstmt.code.get(i)));
+		if(judge == true)
+		{
+			this.code.add(attributeDefinition.next+":"+cstmt.code.firstElement());
+			judge = false;
+			for(int i = 1 ; i < cstmt.code.size() ; i++)
+				this.code.add(new String(cstmt.code.get(i)));
+		}
+		else
+		{
+			for(int i = 0 ; i < cstmt.code.size() ; i++)
+				this.code.add(new String(cstmt.code.get(i)));
+		}
 	}
 	
 	public stmt(break_stmt bstmt)
 	{
 		super();
-		for(int i = 0 ; i < bstmt.code.size() ; i++)
-			this.code.add(new String(bstmt.code.get(i)));
+		if(judge == true)
+		{
+			this.code.add(attributeDefinition.next+":"+bstmt.code.firstElement());
+			judge = false;
+			for(int i = 1 ; i < bstmt.code.size() ; i++)
+				this.code.add(new String(bstmt.code.get(i)));
+		}
+		else
+		{
+			for(int i = 0 ; i < bstmt.code.size() ; i++)
+				this.code.add(new String(bstmt.code.get(i)));
+		}
 	}
 	
 	public stmt(block_stmt bstmt)
 	{
 		super();
+		this.next = bstmt.next;
 		for(int i = 0 ; i < bstmt.code.size() ; i++)
 			this.code.add(new String(bstmt.code.get(i)));
 	}
@@ -604,9 +826,11 @@ class stmt extends attributeDefinition
 
 class block_stmt extends attributeDefinition
 {
+	public String next;
 	public block_stmt(stmt_list sstmt)
 	{
 		super();
+		this.next = sstmt.next;
 		for(int i = 0 ; i < sstmt.code.size() ; i++)
 			this.code.add(new String(sstmt.code.get(i)));
 	}
@@ -614,6 +838,7 @@ class block_stmt extends attributeDefinition
 
 class stmt_list extends attributeDefinition
 {
+	public String next;
 	public stmt_list()
 	{
 		super();
@@ -622,6 +847,7 @@ class stmt_list extends attributeDefinition
 	public stmt_list(stmt sstmt)
 	{
 		super();
+		this.next = sstmt.next;
 		for(int i = 0 ; i < sstmt.code.size() ; i++)
 			this.code.add(new String(sstmt.code.get(i)));
 	}
@@ -629,6 +855,7 @@ class stmt_list extends attributeDefinition
 	public stmt_list(stmt sstmt,stmt_list stmtl)
 	{
 		super();
+		this.next = sstmt.next;
 		for(int i = 0 ; i < stmtl.code.size() ; i++)
 			this.code.add(new String(stmtl.code.get(i)));
 		
@@ -652,15 +879,15 @@ class local_decl extends attributeDefinition
 	public local_decl(IDENT id,type_spec type)
 	{
 		super();
-		data.add(id.name+": .BYTE ?");
+		data.add("\t"+id.name+":\t.BYTE\t?");
 	}
 	
 	public local_decl(int_literal intl,IDENT id,type_spec type)
 	{
 		super();
-		String temp = id.name +": .BYTE";
+		String temp = "\t"+id.name +":\t.BYTE";
 		for(int i = 0 ; i < intl.lexval ; i++)
-			temp = temp + " ?";
+			temp = temp + "\t?";
 		data.add(temp);
 	}
 }
@@ -719,9 +946,14 @@ class fun_decl extends attributeDefinition
 	public fun_decl(compound_stmt cstmt,params pparam,FUNCTION_IDENT id,type_spec type)
 	{
 		super();
-		this.code.add(id.code.get(0)+" :");
+		this.code.add(id.code.get(0)+":");
 		for(int i = 0 ; i < cstmt.code.size() ; i++)
 			this.code.add(new String(cstmt.code.get(i)));
+	}
+	
+	public fun_decl()
+	{
+		super();
 	}
 }
 
@@ -730,15 +962,15 @@ class var_decl extends attributeDefinition
 	public var_decl(IDENT id,type_spec type)
 	{
 		super();
-		data.add(id.name+": .BYTE ?");
+		data.add("\t"+id.name+":\t.BYTE\t?");
 	}
 	
 	public var_decl(int_literal intl,IDENT id,type_spec type)
 	{
 		super();
-		String temp = id.name +": .BYTE";
+		String temp = "\t"+id.name +":\t.BYTE";
 		for(int i = 0 ; i < intl.lexval ; i++)
-			temp = temp + " ?";
+			temp = temp + "\t?";
 		data.add(temp);
 	}
 }
