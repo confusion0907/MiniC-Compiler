@@ -794,7 +794,7 @@ class return_stmt extends attributeDefinition
 		super();
 		attributeDefinition.returnIndex = 2;
 		this.code.add("\tPOP @t"+(temp)+",-,-");
-		this.code.add("\tJalr @t"+(temp++)+",-,-");
+		this.code.add("\tJR @t"+(temp++)+",-,-");
 	}
 	
 	public return_stmt(expr ex)
@@ -805,7 +805,7 @@ class return_stmt extends attributeDefinition
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
 		this.code.add("\tPUSH "+ex.code.lastElement()+",-,-");
-		this.code.add("\tJalr @t"+(temp++)+",-,-");
+		this.code.add("\tJR @t"+(temp++)+",-,-");
 	}
 }
 
@@ -1252,18 +1252,18 @@ class fun_decl extends attributeDefinition
 			}
 		}
 		
-		if(cstmt.code.isEmpty() || !cstmt.code.lastElement().contains("Jalr"))
+		if(cstmt.code.isEmpty() || !cstmt.code.lastElement().contains("JR"))
 		{
 			if(judge == true)
 			{
 				this.code.add(attributeDefinition.next+":"+"\tPOP @t"+(temp)+",-,-");
-				this.code.add("\tJalr @t"+(temp++)+",-,-");
+				this.code.add("\tJR @t"+(temp++)+",-,-");
 				judge = false;
 			}
 			else
 			{
 				this.code.add("\tPOP @t"+(temp)+",-,-");
-				this.code.add("\tJalr @t"+(temp++)+",-,-");
+				this.code.add("\tJR @t"+(temp++)+",-,-");
 			}
 		}
 		else

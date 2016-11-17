@@ -25,7 +25,7 @@ debug:
 	POP @t5,-,-
 	= @t4,-,d
 	PUSH @t4,-,-
-	Jalr @t5,-,-
+	JR @t5,-,-
 .DATA [main]
 	a:	.BYTE	?
 	b:	.BYTE	?
@@ -61,4 +61,4 @@ s3:	POP @t25,-,-
 	POP @t26,-,-
 	= @t26,-,a
 	POP @t27,-,-
-	Jalr @t27,-,-
+	JR @t27,-,-
