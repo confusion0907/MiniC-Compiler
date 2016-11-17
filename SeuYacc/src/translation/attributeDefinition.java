@@ -5,15 +5,75 @@ import java.util.Vector;
 public class attributeDefinition 
 {
 	public Vector<String> code;
-	static Vector<String> data = new Vector<String>();
+	public Vector<String> data;
+	static Vector<function> functions = new Vector<function>();
 	static int temp = 0;
 	static int seg = 0;
 	static String next = "";
 	static boolean judge = false;
+	static int returnIndex = 0;
 	
 	public attributeDefinition()
 	{
 		code = new Vector<String>();
+		data = new Vector<String>();
+	}
+}
+
+class function
+{
+	public String name;
+	public int argsNum;
+	public Vector<parameter> argsName;
+	
+	public function(String name)
+	{
+		argsName = new Vector<parameter>();
+		this.name = name;
+	}
+	
+	public function(String name,int argsNum)
+	{
+		argsName = new Vector<parameter>();
+		this.name = name;
+		this.argsNum = argsNum;
+	}
+	
+	public function(String name,int argsNum,Vector<parameter> argsName)
+	{
+		argsName = new Vector<parameter>();
+		this.name = name;
+		this.argsNum = argsNum;
+		for(int i = 0 ; i < argsName.size() ; i++)
+			this.argsName.add(new parameter(argsName.get(i)));
+	}
+}
+
+class parameter
+{
+	public String name;
+	public String type;
+	public int number;
+	
+	public parameter(type_spec type,IDENT id)
+	{
+		this.name = id.name;
+		this.type = "Integer";
+		this.number = 1;
+	}
+	
+	public parameter(type_spec type,IDENT id,int_literal intl)
+	{
+		this.name = id.name;
+		this.type = "Array";
+		this.number = intl.lexval;
+	}
+	
+	public parameter(parameter temp)
+	{
+		this.name = temp.name;
+		this.type = temp.type;
+		this.number = temp.number;
 	}
 }
 
@@ -289,8 +349,8 @@ class expr extends attributeDefinition
 			}
 			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 				this.code.add(ex2.code.get(i));
-			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
-			this.code.add("\tBLEZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\t- "+"@t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBLEZ "+"@t"+Integer.toString(temp++)+",offsetTrue,-");
 			this.code.add("\tJ offsetFalse,-,-");
 		}
 		else if(op.equals("GE"))
@@ -305,8 +365,8 @@ class expr extends attributeDefinition
 			}
 			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 				this.code.add(ex2.code.get(i));
-			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
-			this.code.add("\tBGEZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\t- "+"@t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBGEZ "+"@t"+Integer.toString(temp++)+",offsetTrue,-");
 			this.code.add("\tJ offsetFalse,-,-");
 		}
 		else if(op.equals("<"))
@@ -321,8 +381,8 @@ class expr extends attributeDefinition
 			}
 			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 				this.code.add(ex2.code.get(i));
-			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
-			this.code.add("\tBLTZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\t- "+"@t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBLTZ "+"@t"+Integer.toString(temp++)+",offsetTrue,-");
 			this.code.add("\tJ offsetFalse,-,-");
 		}
 		else if(op.equals(">"))
@@ -337,8 +397,8 @@ class expr extends attributeDefinition
 			}
 			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 				this.code.add(ex2.code.get(i));
-			this.code.add("\t- "+"t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
-			this.code.add("\tBGTZ "+"t"+Integer.toString(temp++)+",offsetTrue,-");
+			this.code.add("\t- "+"@t"+Integer.toString(temp)+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("\tBGTZ "+"@t"+Integer.toString(temp++)+",offsetTrue,-");
 			this.code.add("\tJ offsetFalse,-,-");
 		}
 		else
@@ -347,8 +407,8 @@ class expr extends attributeDefinition
 				this.code.add(new String(ex1.code.get(i)));
 			for(int i = 0 ; i < ex2.code.size()-1 ; i++)
 				this.code.add(new String(ex2.code.get(i)));
-			this.code.add("\t"+op+" t"+temp+","+ex1.code.lastElement()+","+ex2.code.lastElement());
-			this.code.add("t"+(temp++));
+			this.code.add("\t"+op+" @t"+temp+","+ex1.code.lastElement()+","+ex2.code.lastElement());
+			this.code.add("@t"+(temp++));
 		}
 	}
 	
@@ -359,15 +419,15 @@ class expr extends attributeDefinition
 		{
 			for(int i = 0 ; i < ex.code.size()-1 ; i++)
 				this.code.add(new String(ex.code.get(i)));
-			this.code.add("\t"+op+" t"+temp+",0,"+ex.code.lastElement());
-			this.code.add("t"+(temp++));
+			this.code.add("\t"+op+" @t"+temp+",0,"+ex.code.lastElement());
+			this.code.add("@t"+(temp++));
 		}
 		else if(op.equals("$") || op.equals("~"))
 		{
 			for(int i = 0 ; i < ex.code.size()-1 ; i++)
 				this.code.add(new String(ex.code.get(i)));
-			this.code.add("\t"+op+" t"+temp+",-,"+ex.code.lastElement());
-			this.code.add("t"+(temp++));
+			this.code.add("\t"+op+" @t"+temp+",-,"+ex.code.lastElement());
+			this.code.add("@t"+(temp++));
 		}
 		else if(op.equals("!"))
 		{
@@ -391,15 +451,15 @@ class expr extends attributeDefinition
 	public expr(int_literal inl)
 	{
 		super();
-		this.code.add("\t= t"+temp+",-,"+inl.lexval);
-		this.code.add("t"+(temp++));
+		this.code.add("\t= @t"+temp+",-,"+inl.lexval);
+		this.code.add("@t"+(temp++));
 	}
 	
 	public expr(IDENT id)
 	{
 		super();
-		this.code.add("\t= t"+temp+",-,"+id.name);
-		this.code.add("t"+(temp++));
+		this.code.add("\t= @t"+temp+",-,"+id.name);
+		this.code.add("@t"+(temp++));
 	}
 	
 	public expr(expr ex,IDENT id)
@@ -407,21 +467,30 @@ class expr extends attributeDefinition
 		super();
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(ex.code.get(i));
-		this.code.add("\t=[] t"+temp+","+ex.code.lastElement()+","+id.name);
-		this.code.add("t"+(temp++));
+		this.code.add("\t=[] @t"+temp+","+ex.code.lastElement()+","+id.name);
+		this.code.add("@t"+(temp++));
 	}
 	
 	public expr(args arg,IDENT id)
 	{
 		super();
+		boolean judge = false;
+		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
+		{
+			if(attributeDefinition.functions.get(i).name.equals(id.name) && attributeDefinition.functions.get(i).argsNum == arg.number)
+				judge = true;
+		}
+		if(judge == false)
+		{
+			System.out.println("函数调用有误");
+			System.exit(0);
+		}
+		this.code.add("\tPUSH $PC+"+((arg.code.size()+1)*4)+",-,-");
 		for(int i = 0 ; i < arg.code.size() ; i++)
 			this.code.add(arg.code.get(i));
 		this.code.add("\tCALL -,-,"+id.name);
-		this.code.add("\tPOP -,-,t"+temp++);
-		for(int i = 0 ; i < arg.code.size() ; i++)
-			this.code.add("\tPOP -,-,t"+temp);
-		this.code.add("\t= t"+temp+",-,t"+(temp-1));
-		this.code.add("t"+(temp++));
+		this.code.add("\tPOP -,-,@t"+temp);
+		this.code.add("@t"+(temp++));
 	}
 }
 
@@ -458,15 +527,23 @@ class expr_stmt extends attributeDefinition
 	public expr_stmt(args arg,IDENT id)
 	{
 		super();
+		
+		boolean judge = false;
+		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
+		{
+			if(attributeDefinition.functions.get(i).name.equals(id.name) && attributeDefinition.functions.get(i).argsNum == arg.number)
+				judge = true;
+		}
+		if(judge == false)
+		{
+			System.out.println("函数调用有误");
+			System.exit(0);
+		}
+		
+		this.code.add("\tPUSH $PC+"+((arg.code.size()+1)*4)+",-,-");
 		for(int i = 0 ; i < arg.code.size() ; i++)
 			this.code.add(arg.code.get(i));
 		this.code.add("\tCALL -,-,"+id.name);
-		for(int i = 0 ; i < arg.code.size() ; i++)
-		{
-			if(i == 0)
-				temp = temp + 1;
-			this.code.add("\tPOP -,-,t"+temp);
-		}
 	}
 }
 
@@ -572,7 +649,7 @@ class if_stmt extends attributeDefinition
 		
 		if(ifstmt2.code.size() > 0)
 		{
-			this.code.add(begin2+": "+ifstmt2.code.get(0));
+			this.code.add(begin2+":"+ifstmt2.code.get(0));
 			for(int i = 1 ; i < ifstmt2.code.size() ; i++)
 				this.code.add(new String(ifstmt2.code.get(i)));
 			this.code.add("\tJ "+this.next+",-,-");
@@ -668,13 +745,17 @@ class continue_stmt extends attributeDefinition
 
 class args extends attributeDefinition
 {
+	public int number;
 	public args()
 	{
+		super();
+		this.number = 0;
 	}
 	
 	public args(arg_list list)
 	{
 		super();
+		this.number = list.number;
 		for(int i = 0 ; i < list.code.size() ; i++)
 			this.code.add(new String(list.code.get(i)));
 	}
@@ -682,9 +763,11 @@ class args extends attributeDefinition
 
 class arg_list extends attributeDefinition
 {
+	public int number;
 	public arg_list(expr ex)
 	{
 		super();
+		this.number = 1;
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
 		this.code.add("\tPUSH " + ex.code.lastElement() + ",-,-");
@@ -693,6 +776,7 @@ class arg_list extends attributeDefinition
 	public arg_list(expr ex,arg_list list)
 	{
 		super();
+		this.number = list.number + 1;
 		for(int i = 0 ; i < list.code.size() ; i++)
 			this.code.add(new String(list.code.get(i)));
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
@@ -708,16 +792,20 @@ class return_stmt extends attributeDefinition
 	public return_stmt()
 	{
 		super();
-		this.code.add("\tJal -,-,-");
+		attributeDefinition.returnIndex = 2;
+		this.code.add("\tPOP @t"+(temp)+",-,-");
+		this.code.add("\tJalr @t"+(temp++)+",-,-");
 	}
 	
 	public return_stmt(expr ex)
 	{
 		super();
+		attributeDefinition.returnIndex = 2+ex.code.size();
+		this.code.add("\tPOP @t"+(temp)+",-,-");
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
-		this.code.add("\tPUSH"+ex.code.lastElement()+",-,-");
-		this.code.add("\tJal -,-,-");
+		this.code.add("\tPUSH "+ex.code.lastElement()+",-,-");
+		this.code.add("\tJalr @t"+(temp++)+",-,-");
 	}
 }
 
@@ -892,8 +980,36 @@ class local_decl extends attributeDefinition
 	}
 }
 
+class local_decls extends attributeDefinition
+{
+	public local_decls(local_decl loc,local_decls lodel)
+	{
+		super();
+		for(int i = 0 ; i < lodel.data.size() ; i++)
+			this.data.add(new String(lodel.data.get(i)));
+		for(int i = 0 ; i < loc.data.size() ; i++)
+			this.data.add(new String(loc.data.get(i)));
+	}
+	
+	public local_decls(local_decl loc)
+	{
+		super();
+		for(int i = 0 ; i < loc.data.size() ; i++)
+			this.data.add(new String(loc.data.get(i)));
+	}
+}
+
 class compound extends attributeDefinition
 {
+	public compound(stmt_list sstmt,local_decls lodel)
+	{
+		super();
+		for(int i = 0 ; i < lodel.data.size() ; i++)
+			this.data.add(new String(lodel.data.get(i)));
+		for(int i = 0 ; i < sstmt.code.size() ; i++)
+			this.code.add(new String(sstmt.code.get(i)));
+	}
+	
 	public compound(stmt_list sstmt)
 	{
 		super();
@@ -912,6 +1028,8 @@ class compound_stmt extends attributeDefinition
 	public compound_stmt(compound com)
 	{
 		super();
+		for(int i = 0 ; i < com.data.size() ; i++)
+			this.data.add(new String(com.data.get(i)));
 		for(int i = 0 ; i < com.code.size() ; i++)
 			this.code.add(new String(com.code.get(i)));
 	}
@@ -919,17 +1037,65 @@ class compound_stmt extends attributeDefinition
 
 class param extends attributeDefinition
 {
+	public param(IDENT id,type_spec type)
+	{
+		attributeDefinition.functions.lastElement().argsName.add(new parameter(type,id));
+	}
 	
+	public param(int_literal intl,IDENT id,type_spec type)
+	{
+		attributeDefinition.functions.lastElement().argsName.add(new parameter(type,id,intl));
+	}
 }
 
 class param_list extends attributeDefinition
 {
+	public int number;
 	
+	public param_list(param p)
+	{
+		this.number = 1;
+	}
+	
+	public param_list(param p,param_list pl)
+	{
+		this.number = pl.number+1;
+	}
 }
 
 class params extends attributeDefinition
 {
+	public int number;
 	
+	public params(param_list pl)
+	{
+		this.number = pl.number;
+		attributeDefinition.functions.lastElement().argsNum = this.number;
+		
+		for(int i = 0 ; i < attributeDefinition.functions.size()-1 ; i++)
+		{
+			if(attributeDefinition.functions.get(i).name.equals(attributeDefinition.functions.lastElement().name) && attributeDefinition.functions.get(i).argsNum == attributeDefinition.functions.lastElement().argsNum)
+			{
+				System.out.println("函数重复定义");
+				System.exit(0);
+			}
+		}
+	}
+	
+	public params()
+	{
+		this.number = 0;
+		attributeDefinition.functions.lastElement().argsNum = 0;
+		
+		for(int i = 0 ; i < attributeDefinition.functions.size()-1 ; i++)
+		{
+			if(attributeDefinition.functions.get(i).name.equals(attributeDefinition.functions.lastElement().name) && attributeDefinition.functions.get(i).argsNum == attributeDefinition.functions.lastElement().argsNum)
+			{
+				System.out.println("函数重复定义");
+				System.exit(0);
+			}
+		}
+	}
 }
 
 class FUNCTION_IDENT extends attributeDefinition
@@ -937,6 +1103,7 @@ class FUNCTION_IDENT extends attributeDefinition
 	public FUNCTION_IDENT(IDENT id)
 	{
 		super();
+		attributeDefinition.functions.add(new function(id.name));
 		this.code.add(id.name);
 	}
 }
@@ -946,9 +1113,162 @@ class fun_decl extends attributeDefinition
 	public fun_decl(compound_stmt cstmt,params pparam,FUNCTION_IDENT id,type_spec type)
 	{
 		super();
+		this.data.addAll(cstmt.data);
+		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
+		{
+			if(attributeDefinition.functions.get(i).name.equals(id.code.get(0)))
+			{
+				for(int j = 0 ; j < attributeDefinition.functions.get(i).argsName.size() ; j++)
+				{
+					if(attributeDefinition.functions.get(i).argsName.get(j).type.equals("Integer"))
+					{
+						this.data.add("\t"+attributeDefinition.functions.get(i).argsName.get(j).name+":\t.BYTE\t?");
+					}
+					else if(attributeDefinition.functions.get(i).argsName.get(j).type.equals("Array"))
+					{
+						String stemp = "\t"+attributeDefinition.functions.get(i).argsName.get(j).name+":\t.BYTE";
+						for(int k = 0 ; k < attributeDefinition.functions.get(i).argsName.get(j).number ; k++)
+							stemp = stemp + "\t?";
+						this.data.add(stemp);
+					}
+				}
+			}
+		}
+		
+		this.code.add(".DATA ["+id.code.get(0)+"]");
+		
+		for(int i = 0 ; i < this.data.size() ; i++)
+			this.code.add(this.data.get(i));
+		
+		this.code.add(".CODE ["+id.code.get(0)+"]");
 		this.code.add(id.code.get(0)+":");
-		for(int i = 0 ; i < cstmt.code.size() ; i++)
+		
+		Vector<String> argName = new Vector<String>();
+		Vector<String> register = new Vector<String>();
+		Vector<Integer> indexTemp = new Vector<Integer>();
+		
+		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
+		{
+			if(attributeDefinition.functions.get(i).name.equals(id.code.get(0)))
+			{
+				for(int j = attributeDefinition.functions.get(i).argsName.size()-1 ; j >= 0 ; j--)
+				{
+					if(attributeDefinition.functions.get(i).argsName.get(j).type.equals("Integer"))
+					{
+						this.code.add("\tPOP @t"+temp+",-,-");
+						argName.add(attributeDefinition.functions.get(i).argsName.get(j).name);
+						register.add("@t"+temp);
+						indexTemp.add(-1);
+						temp = temp + 1 ;
+					}
+					else if(attributeDefinition.functions.get(i).argsName.get(j).type.equals("Array"))
+					{
+						int index = attributeDefinition.functions.get(i).argsName.get(j).number-1;
+						for(int k = 0 ; k < attributeDefinition.functions.get(i).argsName.get(j).number ; k++)
+						{
+							this.code.add("\tPOP @t"+temp+",-,-");
+							argName.add(attributeDefinition.functions.get(i).argsName.get(j).name);
+							register.add("@t"+temp);
+							indexTemp.add(index--);
+						}
+						temp = temp + 1 ;
+					}
+				}
+			}
+		}
+		
+		for(int i = 0 ; i < this.data.size() ; i++)
+		{
+			String []stemp = this.data.get(i).split("\t");
+			if(stemp.length == 4)
+			{
+				this.code.add("\t= @t"+temp+",-,"+(stemp[1].substring(0, stemp[1].length()-1)));
+				this.code.add("\tPUSH @t"+temp+",-,-");
+				temp = temp + 1;
+			}
+			else
+			{
+				for(int j = 2 ; j < stemp.length ; j++)
+				{
+					this.code.add("\t= @t"+temp+","+(j-2)+","+stemp[1].substring(0, stemp.length-1));
+					this.code.add("\tPUSH @t"+temp+",-,-");
+					temp = temp + 1;
+				}
+			}
+		}
+		
+		for(int i = 0 ; i < argName.size() ; i++)
+		{
+			if(indexTemp.get(i) == -1)
+				this.code.add("\t= "+argName.get(i)+",-,"+register.get(i));
+			else
+				this.code.add("\t= "+argName.get(i)+","+indexTemp.get(i)+","+register.get(i));
+		}
+		
+		for(int i = 0 ; i < cstmt.code.size()-attributeDefinition.returnIndex ; i++)
 			this.code.add(new String(cstmt.code.get(i)));
+		
+		for(int i = this.data.size()-1 ; i >= 0 ; i--)
+		{
+			if(judge == true)
+			{
+				this.code.add(attributeDefinition.next+":"+"\tPOP @t"+(temp)+",-,-");
+				String []stemp = this.data.get(i).split("\t");
+				if(stemp.length == 4)
+				{
+					this.code.add("\t= @t"+temp+",-,"+(stemp[1].substring(0, stemp[1].length()-1)));
+					temp = temp + 1;
+				}
+				else
+				{
+					for(int j = 2 ; j < stemp.length ; j++)
+					{
+						if(j != 2)
+							this.code.add("\tPOP @t"+(temp)+",-,-");
+						this.code.add("\t= @t"+temp+","+(j-2)+","+stemp[1].substring(0, stemp.length-1));
+						temp = temp + 1;
+					}
+				}
+				judge = false;
+			}
+			else
+			{
+				String []stemp = this.data.get(i).split("\t");
+				if(stemp.length == 4)
+				{
+					this.code.add("\tPOP @t"+(temp)+",-,-");
+					this.code.add("\t= @t"+temp+",-,"+(stemp[1].substring(0, stemp[1].length()-1)));
+					temp = temp + 1;
+				}
+				else
+				{
+					for(int j = 2 ; j < stemp.length ; j++)
+					{
+						this.code.add("\tPOP @t"+(temp)+",-,-");
+						this.code.add("\t= @t"+temp+","+(j-2)+","+stemp[1].substring(0, stemp.length-1));
+						temp = temp + 1;
+					}
+				}
+			}
+		}
+		
+		if(cstmt.code.isEmpty() || !cstmt.code.lastElement().contains("Jalr"))
+		{
+			if(judge == true)
+			{
+				this.code.add(attributeDefinition.next+":"+"\tPOP @t"+(temp)+",-,-");
+				this.code.add("\tJalr @t"+(temp++)+",-,-");
+				judge = false;
+			}
+			else
+			{
+				this.code.add("\tPOP @t"+(temp)+",-,-");
+				this.code.add("\tJalr @t"+(temp++)+",-,-");
+			}
+		}
+		else
+			for(int i = cstmt.code.size()-attributeDefinition.returnIndex ; i < cstmt.code.size() ; i++)
+				this.code.add(new String(cstmt.code.get(i)));
 	}
 	
 	public fun_decl()
@@ -977,9 +1297,10 @@ class var_decl extends attributeDefinition
 
 class decl extends attributeDefinition
 {
-	public decl()
+	public decl(var_decl var)
 	{
 		super();
+		this.data.addAll(var.data);
 	}
 	
 	public decl(fun_decl fun)
@@ -997,6 +1318,7 @@ class decl_list extends attributeDefinition
 		super();
 		for(int i = 0 ; i < dec.code.size() ; i++)
 			this.code.add(new String(dec.code.get(i)));
+		this.data.addAll(dec.data);
 	}
 	
 	public decl_list(decl dec,decl_list decll)
@@ -1006,6 +1328,10 @@ class decl_list extends attributeDefinition
 			this.code.add(new String(decll.code.get(i)));
 		for(int i = 0 ; i < dec.code.size() ; i++)
 			this.code.add(new String(dec.code.get(i)));
+		for(int i = 0 ; i < decll.data.size() ; i++)
+			this.data.add(new String(decll.data.get(i)));
+		for(int i = 0 ; i < dec.data.size() ; i++)
+			this.data.add(new String(dec.data.get(i)));
 	}
 }
 
@@ -1015,9 +1341,8 @@ class program extends attributeDefinition
 	{
 		super();
 		this.code.add(".DATA");
-		for(int i = 0 ; i < data.size() ; i++)
-			this.code.add(new String(data.get(i)));
-		this.code.add(".CODE");
+		for(int i = 0 ; i < decll.data.size() ; i++)
+			this.code.add(new String(decll.data.get(i)));
 		for(int i = 0 ; i < decll.code.size() ; i++)
 			this.code.add(new String(decll.code.get(i)));
 	}
