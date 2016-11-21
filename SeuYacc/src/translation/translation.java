@@ -54,7 +54,7 @@ public class translation {
 		
 		if(judge == true)
 		{
-			semanticAnalysis sem = new semanticAnalysis(my.producers);
+			semanticAnalysis sem = new semanticAnalysis(my.producers,ml.VariSignary,ml.ConsSignary);
 			Vector<String> result = sem.Analysis(code, regulation, lexTranslation);
 			printResult(result);
 		}

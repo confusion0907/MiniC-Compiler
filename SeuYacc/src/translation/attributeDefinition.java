@@ -7,11 +7,16 @@ public class attributeDefinition
 	public Vector<String> code;
 	public Vector<String> data;
 	static Vector<function> functions = new Vector<function>();
+	static Vector<variable> variables = new Vector<variable>();
 	static int temp = 0;
 	static int seg = 0;
 	static String next = "";
 	static boolean judge = false;
 	static int returnIndex = 0;
+	static int variSignaryIndex = 0;
+	static int consSignaryIndex = 0;
+	static Vector<sNode> VariSignary;
+	static Vector<sNode> ConsSignary;
 	
 	public attributeDefinition()
 	{
@@ -47,6 +52,12 @@ class function
 		for(int i = 0 ; i < argsName.size() ; i++)
 			this.argsName.add(new parameter(argsName.get(i)));
 	}
+}
+
+class variable
+{
+	public String name;
+	public String type;
 }
 
 class parameter
@@ -451,6 +462,7 @@ class expr extends attributeDefinition
 	public expr(int_literal inl)
 	{
 		super();
+		attributeDefinition.ConsSignary.get(consSignaryIndex++).set("Integer", "Value", 1 , attributeDefinition.functions.lastElement().name);
 		this.code.add("\t= @t"+temp+",-,"+inl.lexval);
 		this.code.add("@t"+(temp++));
 	}
@@ -458,6 +470,18 @@ class expr extends attributeDefinition
 	public expr(IDENT id)
 	{
 		super();
+		boolean idJudge = false;
+		for(int i = 0 ; i < variSignaryIndex ; i++)
+		{
+			if(attributeDefinition.VariSignary.get(i).type.equals("Integer") && attributeDefinition.VariSignary.get(i).name.equals(id.name) && (attributeDefinition.VariSignary.get(i).actionScope.equals(attributeDefinition.functions.lastElement().name) || attributeDefinition.VariSignary.get(i).actionScope.equals("Global")))
+					idJudge = true;
+		}
+		if(idJudge == false)
+		{
+			System.out.println("未识别的标识符");
+			System.exit(0);
+		}
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		this.code.add("\t= @t"+temp+",-,"+id.name);
 		this.code.add("@t"+(temp++));
 	}
@@ -465,6 +489,18 @@ class expr extends attributeDefinition
 	public expr(expr ex,IDENT id)
 	{
 		super();
+		boolean idJudge = false;
+		for(int i = 0 ; i < variSignaryIndex ; i++)
+		{
+			if(attributeDefinition.VariSignary.get(i).type.equals("Array") && attributeDefinition.VariSignary.get(i).name.equals(id.name) && (attributeDefinition.VariSignary.get(i).actionScope.equals(attributeDefinition.functions.lastElement().name) || attributeDefinition.VariSignary.get(i).actionScope.equals("Global")))
+					idJudge = true;
+		}
+		if(idJudge == false)
+		{
+			System.out.println("未识别的标识符");
+			System.exit(0);
+		}
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(ex.code.get(i));
 		this.code.add("\t=[] @t"+temp+","+ex.code.lastElement()+","+id.name);
@@ -474,6 +510,7 @@ class expr extends attributeDefinition
 	public expr(args arg,IDENT id)
 	{
 		super();
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		boolean judge = false;
 		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
 		{
@@ -499,6 +536,7 @@ class expr_stmt extends attributeDefinition
 	public expr_stmt(expr ex,IDENT id)
 	{
 		super();
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(ex.code.get(i));
 		this.code.add("\t= "+id.name+",-,"+ex.code.lastElement());
@@ -507,6 +545,7 @@ class expr_stmt extends attributeDefinition
 	public expr_stmt(expr ex2,expr ex1,IDENT id)
 	{
 		super();
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		for(int i = 0 ; i < ex1.code.size()-1 ; i++)
 			this.code.add(ex1.code.get(i));
 		for(int i = 0 ; i < ex2.code.size()-1 ; i++)
@@ -527,7 +566,7 @@ class expr_stmt extends attributeDefinition
 	public expr_stmt(args arg,IDENT id)
 	{
 		super();
-		
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		boolean judge = false;
 		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
 		{
@@ -967,12 +1006,15 @@ class local_decl extends attributeDefinition
 	public local_decl(IDENT id,type_spec type)
 	{
 		super();
+		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Integer", "Variable", 1 , attributeDefinition.functions.lastElement().name);
 		data.add("\t"+id.name+":\t.BYTE\t?");
 	}
 	
 	public local_decl(int_literal intl,IDENT id,type_spec type)
 	{
 		super();
+		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Array", "Variable", intl.lexval , attributeDefinition.functions.lastElement().name);
+		attributeDefinition.ConsSignary.get(consSignaryIndex++).set("Integer", "Value", 1 , attributeDefinition.functions.lastElement().name);
 		String temp = "\t"+id.name +":\t.BYTE";
 		for(int i = 0 ; i < intl.lexval ; i++)
 			temp = temp + "\t?";
@@ -1039,11 +1081,14 @@ class param extends attributeDefinition
 {
 	public param(IDENT id,type_spec type)
 	{
+		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Integer", "Parameter", 1 , functions.lastElement().name);
 		attributeDefinition.functions.lastElement().argsName.add(new parameter(type,id));
 	}
 	
 	public param(int_literal intl,IDENT id,type_spec type)
 	{
+		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Array", "Parameter", intl.lexval , functions.lastElement().name);
+		attributeDefinition.ConsSignary.get(consSignaryIndex++).set("Integer", "Value", 1 , functions.lastElement().name);
 		attributeDefinition.functions.lastElement().argsName.add(new parameter(type,id,intl));
 	}
 }
@@ -1103,6 +1148,7 @@ class FUNCTION_IDENT extends attributeDefinition
 	public FUNCTION_IDENT(IDENT id)
 	{
 		super();
+		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		attributeDefinition.functions.add(new function(id.name));
 		this.code.add(id.name);
 	}
@@ -1282,12 +1328,15 @@ class var_decl extends attributeDefinition
 	public var_decl(IDENT id,type_spec type)
 	{
 		super();
+		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Integer", "Variable", 1 , "Global");
 		data.add("\t"+id.name+":\t.BYTE\t?");
 	}
 	
 	public var_decl(int_literal intl,IDENT id,type_spec type)
 	{
 		super();
+		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Array", "Variable", intl.lexval , "Global");
+		attributeDefinition.ConsSignary.get(consSignaryIndex++).set("Integer", "Value", 1 , "Global");
 		String temp = "\t"+id.name +":\t.BYTE";
 		for(int i = 0 ; i < intl.lexval ; i++)
 			temp = temp + "\t?";

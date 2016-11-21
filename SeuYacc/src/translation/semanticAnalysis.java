@@ -8,10 +8,12 @@ public class semanticAnalysis
 	public Vector<producer> producers;
 	private Stack<Object> nonter;
 	
-	public semanticAnalysis(Vector<producer> producers)
+	public semanticAnalysis(Vector<producer> producers,Vector<sNode> VariSignary,Vector<sNode> ConsSignary)
 	{
 		this.producers = producers;
 		this.nonter = new Stack<Object>();
+		attributeDefinition.VariSignary = VariSignary;
+		attributeDefinition.ConsSignary = ConsSignary;
 		attributeDefinition.functions.clear();
 	}
 	
