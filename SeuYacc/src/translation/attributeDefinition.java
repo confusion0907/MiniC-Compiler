@@ -6,8 +6,7 @@ public class attributeDefinition
 {
 	public Vector<String> code;
 	public Vector<String> data;
-	static Vector<function> functions = new Vector<function>();
-	static Vector<variable> variables = new Vector<variable>();
+	static Vector<function> functions = new Vector<function>(); //函数表
 	static int temp = 0;
 	static int seg = 0;
 	static String next = "";
@@ -15,8 +14,8 @@ public class attributeDefinition
 	static int returnIndex = 0;
 	static int variSignaryIndex = 0;
 	static int consSignaryIndex = 0;
-	static Vector<sNode> VariSignary;
-	static Vector<sNode> ConsSignary;
+	static Vector<sNode> VariSignary; //变量符号表
+	static Vector<sNode> ConsSignary; //常量符号表
 	
 	public attributeDefinition()
 	{
@@ -27,9 +26,9 @@ public class attributeDefinition
 
 class function
 {
-	public String name;
-	public int argsNum;
-	public Vector<parameter> argsName;
+	public String name; //函数名
+	public int argsNum; //参数个数
+	public Vector<parameter> argsName; //参数名称及属性
 	public boolean activeJudge = false;
 	
 	public function(String name)
@@ -55,17 +54,11 @@ class function
 	}
 }
 
-class variable
-{
-	public String name;
-	public String type;
-}
-
 class parameter
 {
-	public String name;
-	public String type;
-	public int number;
+	public String name; //参数名称
+	public String type; //参数类型（数组或变量）
+	public int number; //参数大小
 	
 	public parameter(type_spec type,IDENT id)
 	{
