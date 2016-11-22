@@ -86,10 +86,8 @@ public class semanticAnalysis
 			nonter.push(fun);
 			break;
 		case 11:
-			nonter.pop();
-			nonter.pop();
-			nonter.pop();
-			nonter.push(new fun_decl());
+			fun_decl fun2 = new fun_decl((params)nonter.pop(),(FUNCTION_IDENT)nonter.pop(),(type_spec)nonter.pop());
+			nonter.push(fun2);
 			break;
 		case 12:
 			FUNCTION_IDENT id = new FUNCTION_IDENT((IDENT)nonter.pop());
