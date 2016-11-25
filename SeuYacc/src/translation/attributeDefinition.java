@@ -16,6 +16,7 @@ public class attributeDefinition
 	static int consSignaryIndex = 0;
 	static Vector<sNode> VariSignary; //变量符号表
 	static Vector<sNode> ConsSignary; //常量符号表
+	static boolean returnInt = false;
 	
 	public attributeDefinition()
 	{
@@ -29,6 +30,7 @@ class function
 	public String name; //函数名
 	public int argsNum; //参数个数
 	public Vector<parameter> argsName; //参数名称及属性
+	public String returnType; //返回类型
 	public boolean activeJudge = false;
 	
 	public function(String name)
@@ -602,10 +604,14 @@ class expr_stmt extends attributeDefinition
 		super();
 		attributeDefinition.VariSignary.removeElementAt(variSignaryIndex);
 		boolean judge = false;
+		boolean returnJudge = false;
 		for(int i = 0 ; i < attributeDefinition.functions.size() ; i++)
 		{
 			if(attributeDefinition.functions.get(i).name.equals(id.name) && attributeDefinition.functions.get(i).argsNum == arg.number)
 				judge = true;
+			
+			if(attributeDefinition.functions.get(i).name.equals(id.name) && attributeDefinition.functions.get(i).returnType.equals("INT"))
+				returnJudge = true;
 		}
 		if(judge == false)
 		{
@@ -613,10 +619,21 @@ class expr_stmt extends attributeDefinition
 			System.exit(0);
 		}
 		
-		this.code.add("\tPUSH $PC+"+((arg.code.size()+1)*4)+",-,-");
-		for(int i = 0 ; i < arg.code.size() ; i++)
-			this.code.add(arg.code.get(i));
-		this.code.add("\tCALL -,-,"+id.name);
+		if(returnJudge == false)
+		{
+			this.code.add("\tPUSH $PC+"+((arg.code.size()+1)*4)+",-,-");
+			for(int i = 0 ; i < arg.code.size() ; i++)
+				this.code.add(arg.code.get(i));
+			this.code.add("\tCALL -,-,"+id.name);
+		}
+		else
+		{
+			this.code.add("\tPUSH $PC+"+((arg.code.size()+2)*4)+",-,-");
+			for(int i = 0 ; i < arg.code.size() ; i++)
+				this.code.add(arg.code.get(i));
+			this.code.add("\tCALL -,-,"+id.name);
+			this.code.add("\tPOP @t"+temp+",-,-");
+		}
 	}
 }
 
@@ -879,6 +896,7 @@ class return_stmt extends attributeDefinition
 			this.code.add(new String(ex.code.get(i)));
 		this.code.add("\tPUSH "+ex.code.lastElement()+",-,-");
 		this.code.add("\tJR @t"+(temp++)+",-,-");
+		attributeDefinition.returnInt = true;
 	}
 }
 
@@ -1226,6 +1244,27 @@ class fun_decl extends attributeDefinition
 	{
 		super();
 		functions.lastElement().activeJudge = true;
+		functions.lastElement().returnType = type.type;
+		
+		if(returnInt == true)
+		{
+			if(type.type.equals("VOID"))
+			{
+				System.out.println("返回类型有误");
+				System.exit(0);
+			}
+			else
+				returnInt = false;
+		}
+		else
+		{
+			if(type.type.equals("INT"))
+			{
+				System.out.println("返回类型有误");
+				System.exit(0);
+			}
+		}
+		
 		for(int i = 0 ; i < attributeDefinition.functions.size()-1 ; i++)
 		{
 			if(functions.get(i).name.equals(id.code.get(0)) && functions.get(i).activeJudge == false)
@@ -1400,7 +1439,7 @@ class fun_decl extends attributeDefinition
 	{
 		super();
 		functions.lastElement().activeJudge = false;
-		
+		functions.lastElement().returnType = type.type;
 		for(int i = 0 ; i < variSignaryIndex ; i++)
 		{
 			if(attributeDefinition.VariSignary.get(i).actionScope.equals(id.code.get(0)))
