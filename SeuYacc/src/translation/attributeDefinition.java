@@ -520,11 +520,12 @@ class expr extends attributeDefinition
 			System.out.println("函数调用有误");
 			System.exit(0);
 		}
-		this.code.add("\tPUSH $PC+"+((arg.code.size()+1)*4)+",-,-");
+		this.code.add("\tPUSH $ra"+",-,-");
 		for(int i = 0 ; i < arg.code.size() ; i++)
 			this.code.add(arg.code.get(i));
-		this.code.add("\tCALL -,-,"+id.name);
-		this.code.add("\tPOP -,-,@t"+temp);
+		this.code.add("\tJAL "+id.name+",-,-");
+		this.code.add("\tPOP @t"+temp+",-,-");
+		this.code.add("\tPOP $ra,-,-");
 		this.code.add("@t"+(temp++));
 	}
 }
@@ -621,18 +622,20 @@ class expr_stmt extends attributeDefinition
 		
 		if(returnJudge == false)
 		{
-			this.code.add("\tPUSH $PC+"+((arg.code.size()+1)*4)+",-,-");
+			this.code.add("\tPUSH $ra"+",-,-");
 			for(int i = 0 ; i < arg.code.size() ; i++)
 				this.code.add(arg.code.get(i));
-			this.code.add("\tCALL -,-,"+id.name);
+			this.code.add("\tJAL "+id.name+",-,-");
+			this.code.add("\tPOP $ra,-,-");
 		}
 		else
 		{
-			this.code.add("\tPUSH $PC+"+((arg.code.size()+2)*4)+",-,-");
+			this.code.add("\tPUSH $ra"+",-,-");
 			for(int i = 0 ; i < arg.code.size() ; i++)
 				this.code.add(arg.code.get(i));
-			this.code.add("\tCALL -,-,"+id.name);
+			this.code.add("\tJAL "+id.name+",-,-");
 			this.code.add("\tPOP @t"+temp+",-,-");
+			this.code.add("\tPOP $ra,-,-");
 		}
 	}
 }
@@ -883,19 +886,17 @@ class return_stmt extends attributeDefinition
 	{
 		super();
 		attributeDefinition.returnIndex = 2;
-		this.code.add("\tPOP @t"+(temp)+",-,-");
-		this.code.add("\tJR @t"+(temp++)+",-,-");
+		this.code.add("\tJR $ra"+",-,-");
 	}
 	
 	public return_stmt(expr ex)
 	{
 		super();
 		attributeDefinition.returnIndex = 2+ex.code.size();
-		this.code.add("\tPOP @t"+(temp)+",-,-");
 		for(int i = 0 ; i < ex.code.size()-1 ; i++)
 			this.code.add(new String(ex.code.get(i)));
 		this.code.add("\tPUSH "+ex.code.lastElement()+",-,-");
-		this.code.add("\tJR @t"+(temp++)+",-,-");
+		this.code.add("\tJR $ra"+",-,-");
 		attributeDefinition.returnInt = true;
 	}
 }
@@ -1067,7 +1068,7 @@ class local_decl extends attributeDefinition
 			}
 		}
 		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Integer", "Variable", 1 , attributeDefinition.functions.lastElement().name);
-		data.add("\t"+id.name+":\t.BYTE\t?");
+		data.add("\t"+id.name+":\t.WORD\t?");
 	}
 	
 	public local_decl(int_literal intl,IDENT id,type_spec type)
@@ -1083,7 +1084,7 @@ class local_decl extends attributeDefinition
 		}
 		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Array", "Variable", intl.lexval , attributeDefinition.functions.lastElement().name);
 		attributeDefinition.ConsSignary.get(consSignaryIndex++).set("Integer", "Value", 1 , attributeDefinition.functions.lastElement().name);
-		String temp = "\t"+id.name +":\t.BYTE";
+		String temp = "\t"+id.name +":\t.WORD";
 		for(int i = 0 ; i < intl.lexval ; i++)
 			temp = temp + "\t?";
 		data.add(temp);
@@ -1465,7 +1466,7 @@ class var_decl extends attributeDefinition
 			}
 		}
 		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Integer", "Variable", 1 , "Global");
-		data.add("\t"+id.name+":\t.BYTE\t?");
+		data.add("\t"+id.name+":\t.WORD\t?");
 	}
 	
 	public var_decl(int_literal intl,IDENT id,type_spec type)
@@ -1481,7 +1482,7 @@ class var_decl extends attributeDefinition
 		}
 		attributeDefinition.VariSignary.get(variSignaryIndex++).set("Array", "Variable", intl.lexval , "Global");
 		attributeDefinition.ConsSignary.get(consSignaryIndex++).set("Integer", "Value", 1 , "Global");
-		String temp = "\t"+id.name +":\t.BYTE";
+		String temp = "\t"+id.name +":\t.WORD";
 		for(int i = 0 ; i < intl.lexval ; i++)
 			temp = temp + "\t?";
 		data.add(temp);

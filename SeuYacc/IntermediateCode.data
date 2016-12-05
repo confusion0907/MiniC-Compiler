@@ -1,9 +1,9 @@
 .DATA
-	number:	.BYTE	?
-	c:	.BYTE	?	?	?
+	number:	.WORD	?
+	c:	.WORD	?	?	?
 .DATA [main]
-	a:	.BYTE	?
-	b:	.BYTE	?
+	a:	.WORD	?
+	b:	.WORD	?
 .CODE [main]
 main:
 	= @t12,-,a
@@ -23,11 +23,12 @@ main:
 	= @t7,-,b
 	BEQ @t6,@t7,s1
 	J s2,-,-
-s1:	PUSH $PC+12,-,-
+s1:	PUSH $ra,-,-
 	= @t8,-,b
 	PUSH @t8,-,-
-	CALL -,-,debug
-	POP -,-,@t9
+	JAL debug,-,-
+	POP @t9,-,-
+	POP $ra,-,-
 	= a,-,@t9
 	J s3,-,-
 s2:	= @t10,-,4
@@ -42,27 +43,26 @@ s3:	POP @t14,-,-
 	POP @t16,-,-
 	JR @t16,-,-
 .DATA [debug]
-	b:	.BYTE	?
+	b:	.WORD	?
 	a:	.BYTE	?
 .CODE [debug]
 debug:
-	POP @t24,-,-
-	= @t25,-,b
-	PUSH @t25,-,-
-	= @t26,-,a
-	PUSH @t26,-,-
-	= a,-,@t24
-	= @t17,-,2
-	= b,-,@t17
-	POP @t27,-,-
-	= @t27,-,a
-	POP @t28,-,-
-	= @t28,-,b
 	POP @t23,-,-
+	= @t24,-,b
+	PUSH @t24,-,-
+	= @t25,-,a
+	PUSH @t25,-,-
+	= a,-,@t23
+	= @t17,-,2
+	POP @t26,-,-
+	= @t26,-,a
+	POP @t27,-,-
+	= @t27,-,b
+	= b,-,@t17
 	= @t18,-,a
 	= @t19,-,b
 	= @t20,-,2
 	/ @t21,@t19,@t20
 	+ @t22,@t18,@t21
 	PUSH @t22,-,-
-	JR @t23,-,-
+	JR $ra,-,-

@@ -222,7 +222,7 @@ public class ParsingTable {
 	public void resultArray()
 	{
 		try {
-			FileWriter fileWriter = new FileWriter("parsingTable.data");
+			FileWriter fileWriter = new FileWriter("MipsTable.data");
 			
 			fileWriter.write("%terminals ");
 			for(int i = 0 ; i < terminals.size() ; i++)

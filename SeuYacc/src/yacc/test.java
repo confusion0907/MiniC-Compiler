@@ -3,7 +3,7 @@ package yacc;
 public class test {
 	public static void main(String[] args) 
 	{
-		String fname = "Cminus.y";
+		String fname = "Mips.y";
 		
 		YaccGrammarReader yacc = new YaccGrammarReader(fname);
 		yacc.readYacc();
